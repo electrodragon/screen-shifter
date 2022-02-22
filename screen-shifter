@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+
+def get_display_mode_name():
+    output = subprocess.run(['xrandr', '-q'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+
+    final_line = ''
+
+    for lin in output.split('\n'):
+        if 'primary' in lin:
+            final_line = lin
+            break
+
+    return final_line.split(' ')[0]
+
+modes = [
+    [1024, 768,  '320p (Desktop)'],
+    [1366, 768,  '480p'],
+    [1600, 900,  '720p'],
+    [1920, 1080,  '1080p'],
+    [1920, 1080,  '1080p'],
+    [2048, 1080,  '2k'],
+    [3840, 2160,  '4k'],
+    [7680, 4320,  '8k'],
+    [15360, 8640, '16k']
+]
+
+count = 1
+
+selected = None 
+
+for mode in modes:
+    print(f'{count}. {mode[0]}x{mode[1]}\t({mode[2]})')
+    count = count + 1
+
+print("---------------------")
+inp = int(input("Choose Display: "))
+
+selected = modes[inp - 1]
+
+mode_name = f'{selected[0]}x{selected[1]}'
+display_mode = get_display_mode_name()
+print(mode_name)
+os.system(f"gtf {selected[0]} {selected[1]} 60.0 | grep Modeline | cut -d\\\" -f3 | xargs xrandr --newmode \"{mode_name}\"")
+os.system(f'xrandr --addmode "{display_mode}" {mode_name}')
+os.system(f'xrandr --output "{display_mode}" --mode {mode_name}')
+
+print("Launching VNC server")
+os.system("ip a | grep inet\\ | grep 192 | xargs echo | cut -d\\/ -f1")
+os.system("x0vncserver -rfbauth ~/.vnc/passwd")
+
